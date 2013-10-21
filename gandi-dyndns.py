@@ -14,23 +14,11 @@ IP_ADDRESS_REGEX = re.compile('\d{1,3}(?:\.\d{1,3}){3}')
 def get_external_ip(attempts=100, threshold=3):
   """Return our current external IP address, or None if there was an error."""
 
-  # randomly-ordered list of valid providers to try for our external IP
-  providers = [
-    'http://whatismyipaddress.org',
-    'http://checkip.dyndns.org/',
-    'http://www.whatsmyip.us/',
-    'http://www.myip.ru/en-EN/index.php',
-    'http://cmyip.com',
-    'http://ventrilo.com/myip.php',
-    'http://whatsmyip.net/',
-    'http://ipchicken.com/',
-    'http://www.myipnumber.com/my-ip-address.asp',
-    'http://fmbip.com/',
-    'http://my-ip.asia/',
-    'http://www.givememyip.com/',
-    'https://www.name.com/whats-my-ip-address',
-    'http://www.showmyip.gr/',
-  ]
+  # read the list of IP address providers, de-duping and normalizing them
+  providers = []
+  with open('ip-providers.txt') as f:
+    providers = set(line.strip() for line in f)
+    providers = filter(lambda x: not not x, providers)
 
   # we want different providers to agree on the address, otherwise we need to
   # keep trying to get agreement. this prevents picking up 'addresses' that are
@@ -74,6 +62,14 @@ def get_external_ip(attempts=100, threshold=3):
       print 'error getting external IP address from %s:' % provider, e
 
   # return None if no agreement could be reached
+  return None
+
+def get_gandi_xmlrpc(api_key):
+  """
+  Return an xmlrpclib.ServerProxy object for the Gandi account with the given
+  API key.
+  """
+
   return None
 
 def main():
