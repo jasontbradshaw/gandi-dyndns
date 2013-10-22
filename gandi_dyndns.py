@@ -30,7 +30,7 @@ class GandiServerProxy(object):
       if test:
         url = 'https://rpc.ote.gandi.net/xmlrpc/'
 
-      proxy = xmlrpclib.ServerProxy('https://rpc.gandi.net/xmlrpc/')
+      proxy = xmlrpclib.ServerProxy(url)
 
     self.proxy = proxy
 
