@@ -11,6 +11,45 @@ import xmlrpclib
 # multiple-provider agreement before returning an IP.
 IP_ADDRESS_REGEX = re.compile('\d{1,3}(?:\.\d{1,3}){3}')
 
+class GandiServerProxy(object):
+  """
+  Proxy calls to an internal xmlrpclib.ServerProxy instance, accounting for the
+  quirks of the Gandi API format, namely dot-delimited method names. This allows
+  calling the API using Python attribute accessors instead of strings, and
+  allows for the API key to be pre-loaded into all method calls.
+  """
+  def __init__(self, api_key, proxy=None, chain=[], test=False):
+    self.api_key = api_key
+    self.chain = chain
+
+    # create a new proxy if none was provided via chaining
+    if proxy is None:
+      # test and production environments use different URLs
+      url = 'https://rpc.gandi.net/xmlrpc/'
+      if test:
+        url = 'https://rpc.ote.gandi.net/xmlrpc/'
+
+      proxy = xmlrpclib.ServerProxy('https://rpc.gandi.net/xmlrpc/')
+
+    self.proxy = proxy
+
+  def __getattr__(self, attr):
+    self.chain.append(attr)
+
+    # return a new instance pre-loaded with the method chain so far
+    return GandiServerProxy(self.api_key, self.proxy, chain=self.chain[:])
+
+  def __call__(self, *args):
+    """Call the chained XMLRPC method."""
+
+    method = '.'.join(self.chain)
+
+    # prepend the API key to the method call
+    key_args = (self.api_key,) + args
+
+    # call the proxy's method with the modified arguments
+    return getattr(self.proxy, method)(*key_args)
+
 def get_external_ip(attempts=100, threshold=3):
   """Return our current external IP address, or None if there was an error."""
 
@@ -64,21 +103,18 @@ def get_external_ip(attempts=100, threshold=3):
   # return None if no agreement could be reached
   return None
 
-def get_gandi_xmlrpc(api_key):
-  """
-  Return an xmlrpclib.ServerProxy object for the Gandi account with the given
-  API key.
-  """
-
-  return None
-
 def main():
   """
   Check our external IP address and update Gandi's A-record to point to it if
   it has changed.
   """
 
-  print get_external_ip()
+  # TODO: get the external IP address, since everything hinges on it
+  # external_ip = get_external_ip()
+
+  api = GandiServerProxy(os.environ["APIKEY"], test=True)
+
+  print api.version.info()
 
 if __name__ == '__main__':
   main()
