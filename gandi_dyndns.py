@@ -73,8 +73,8 @@ def get_external_ip(attempts=100, threshold=3):
     attempts -= 1
 
     # randomly shuffle the providers list when it's empty so we can round-robin
-    # from all the providers. also reset the counts, since we don't want to
-    # double-count the same providers.
+    # from all the providers. also reset the counts, since double-counting
+    # results from the same providers might result in false-positives.
     if len(current_providers) == 0:
       current_providers = providers[:]
       random.shuffle(current_providers)
