@@ -34,16 +34,20 @@ class GandiServerProxy(object):
 
     self.proxy = proxy
 
-  def __getattr__(self, attr):
-    self.chain.append(attr)
+  def __getattr__(self, method):
+    # copy the chain with the new method added to the end
+    new_chain = self.chain[:]
+    new_chain.append(method)
 
     # return a new instance pre-loaded with the method chain so far
-    return GandiServerProxy(self.api_key, self.proxy, chain=self.chain[:])
+    return GandiServerProxy(self.api_key, self.proxy, chain=new_chain)
 
   def __call__(self, *args):
     """Call the chained XMLRPC method."""
 
+    # build the method name and clear the chain
     method = '.'.join(self.chain)
+    del self.chain[:]
 
     # prepend the API key to the method call
     key_args = (self.api_key,) + args
@@ -121,12 +125,17 @@ def main():
   it has changed.
   """
 
+  from pprint import pprint as pp
+
   # TODO: get the external IP address, since everything hinges on it
-  external_ip = get_external_ip()
-  print 'external IP address:', external_ip
+  # external_ip = get_external_ip()
+  # print 'external IP address:', external_ip
+
+  if 'APIKEY' not in os.environ:
+    raise ValueError("'APIKEY' environment variable is required")
 
   api_key = os.environ['APIKEY']
-  api = GandiServerProxy(api_key, test=True)
+  gandi = GandiServerProxy(api_key, test=False)
 
   print api.version.info()
 
