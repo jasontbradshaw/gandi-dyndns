@@ -85,7 +85,12 @@ def get_external_ip(attempts=100, threshold=3):
       data = urllib2.urlopen(provider, timeout=10).read()
       addys = IP_ADDRESS_REGEX.findall(data)
 
-      # add an address to the counter randomly to help prevent false positives
+      # add a single address to the counter randomly to help prevent false
+      # positives. we don't add all the found addresses to guard against adding
+      # multiple false positives for the same site. taking a single random
+      # address and then checking it against the other sites is safer. what are
+      # the chances that several sites will return the same false-positive
+      # number?
       if len(addys) > 0:
         ip = random.choice(addys)
         ip_counts.update({ ip: 1 })
@@ -112,7 +117,8 @@ def main():
   # TODO: get the external IP address, since everything hinges on it
   # external_ip = get_external_ip()
 
-  api = GandiServerProxy(os.environ["APIKEY"], test=True)
+  api_key = os.environ['APIKEY']
+  api = GandiServerProxy(api_key, test=True)
 
   print api.version.info()
 
