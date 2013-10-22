@@ -4,6 +4,7 @@ import collections
 import os
 import random
 import re
+import time
 import urllib2
 import xmlrpclib
 
@@ -59,9 +60,9 @@ def get_external_ip(attempts=100, threshold=3):
     providers = set(line.strip() for line in f)
     providers = filter(lambda x: not not x, providers)
 
-  # we want different providers to agree on the address, otherwise we need to
-  # keep trying to get agreement. this prevents picking up 'addresses' that are
-  # really just strings of four dot-delimited numbers
+  # we want several different providers to agree on the address, otherwise we
+  # need to keep trying to get agreement. this prevents picking up 'addresses'
+  # that are really just strings of four dot-delimited numbers.
   ip_counts = collections.Counter()
 
   # the providers we're round-robining from
@@ -72,10 +73,12 @@ def get_external_ip(attempts=100, threshold=3):
     attempts -= 1
 
     # randomly shuffle the providers list when it's empty so we can round-robin
-    # from all the providers.
+    # from all the providers. also reset the counts, since we don't want to
+    # double-count the same providers.
     if len(current_providers) == 0:
       current_providers = providers[:]
       random.shuffle(current_providers)
+      ip_counts = collections.Counter()
 
     # get the provider we'll try this time
     provider = current_providers.pop()
@@ -105,6 +108,10 @@ def get_external_ip(attempts=100, threshold=3):
     except Exception, e:
       print 'error getting external IP address from %s:' % provider, e
 
+      # sleep a bit after errors, in case it's a general network error. if it
+      # is, hopefully this will give some time for the network to come back up.
+      time.sleep(0.1 + random.random() * 2)
+
   # return None if no agreement could be reached
   return None
 
@@ -115,7 +122,8 @@ def main():
   """
 
   # TODO: get the external IP address, since everything hinges on it
-  # external_ip = get_external_ip()
+  external_ip = get_external_ip()
+  print 'external IP address:', external_ip
 
   api_key = os.environ['APIKEY']
   api = GandiServerProxy(api_key, test=True)
