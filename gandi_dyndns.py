@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import collections
-import os
+import json
 import random
 import re
 import time
@@ -13,12 +13,12 @@ import xmlrpclib
 IP_ADDRESS_REGEX = re.compile('\d{1,3}(?:\.\d{1,3}){3}')
 
 class GandiServerProxy(object):
-  """
+  '''
   Proxy calls to an internal xmlrpclib.ServerProxy instance, accounting for the
   quirks of the Gandi API format, namely dot-delimited method names. This allows
   calling the API using Python attribute accessors instead of strings, and
   allows for the API key to be pre-loaded into all method calls.
-  """
+  '''
   def __init__(self, api_key, proxy=None, chain=[], test=False):
     self.api_key = api_key
     self.chain = chain
@@ -43,7 +43,7 @@ class GandiServerProxy(object):
     return GandiServerProxy(self.api_key, self.proxy, chain=new_chain)
 
   def __call__(self, *args):
-    """Call the chained XMLRPC method."""
+    '''Call the chained XMLRPC method.'''
 
     # build the method name and clear the chain
     method = '.'.join(self.chain)
@@ -56,7 +56,7 @@ class GandiServerProxy(object):
     return getattr(self.proxy, method)(*key_args)
 
 def get_external_ip(attempts=100, threshold=3):
-  """Return our current external IP address, or None if there was an error."""
+  '''Return our current external IP address, or None if there was an error.'''
 
   # read the list of IP address providers, de-duping and normalizing them
   providers = []
@@ -119,25 +119,115 @@ def get_external_ip(attempts=100, threshold=3):
   # return None if no agreement could be reached
   return None
 
+def load_config():
+  '''Load the config file from disk'''
+  with open('config.json') as f:
+    return json.load(f)
+
+def is_valid_dynamic_record(name, record):
+  '''Return True if the record matched the given name and is an A record.'''
+  return record['name'] == name and record['type'].lower() == 'a'
+
 def main():
-  """
+  '''
   Check our external IP address and update Gandi's A-record to point to it if
   it has changed.
-  """
+  '''
 
+  import sys
   from pprint import pprint as pp
 
   # TODO: get the external IP address, since everything hinges on it
   # external_ip = get_external_ip()
   # print 'external IP address:', external_ip
 
-  if 'APIKEY' not in os.environ:
-    raise ValueError("'APIKEY' environment variable is required")
+  # load the config file so we can get our variables
+  print 'loading config file'
+  config = load_config()
 
-  api_key = os.environ['APIKEY']
-  gandi = GandiServerProxy(api_key, test=False)
+  # create a connection to the Gandi production API
+  gandi = GandiServerProxy(config['api_key'])
 
-  print api.version.info()
+  # get the current zone id for the configured domain
+  print "getting domain info for domain '%s'" % config['domain']
+  domain_info = gandi.domain.info(config['domain'])
+  zone_id = domain_info['zone_id']
+
+  # get the list of records for the domain's current zone
+  print 'getting zone records for live zone version'
+  zone_records = gandi.domain.zone.record.list(zone_id, 0)
+
+  # find the configured record, or None if there's not a valid one
+  print "searching for dynamic record '%s'" % config['name']
+  dynamic_record = None
+  for record in zone_records:
+    if is_valid_dynamic_record(config['name'], record):
+      dynamic_record = record
+      break
+
+  # fail if we found no valid record to update
+  if dynamic_record is None:
+    print 'no matching record found - must be an A record with a matching name'
+    sys.exit(1)
+
+  print 'dynamic record found'
+
+  # see if the record's IP differs from ours
+  print 'getting external IP'
+  external_ip = get_external_ip()
+
+  # make sure we actually got the external IP
+  if external_ip is None:
+    print 'could not get external IP'
+    sys.exit(2)
+
+  print 'external IP is %s' % external_ip
+
+  # compare the IPs, and exit if they match
+  if external_ip == dynamic_record['value'].strip():
+    print 'external IP %s matches current IP, no update necessary' % external_ip
+    sys.exit(0)
+
+  # clone the active zone version so we can modify it
+  print 'cloning current zone version'
+  new_version_id = gandi.domain.zone.version.new(zone_id)
+  new_zone_records = gandi.domain.zone.record.list(zone_id, new_version_id)
+
+  # find the configured record, or None if there's not a valid one
+  print 'locating dynamic record in new version'
+  new_dynamic_record = None
+  for record in new_zone_records:
+    if is_valid_dynamic_record(config['name'], record):
+      new_dynamic_record = record
+      break
+
+  # fail if we couldn't find the dynamic record again (this shouldn't happen...)
+  if new_dynamic_record is None:
+    print 'could not find dynamic record in new zone version!'
+    sys.exit(3)
+
+  # update the new version's dynamic record value (i.e. its IP address)
+  print 'updating dynamic record with new external IP %s' % external_ip
+  updated_record = gandi.domain.zone.record.update(zone_id, new_version_id, {
+    'id': new_dynamic_record['id']
+  }, {
+    'name': new_dynamic_record['name'],
+    'type': new_dynamic_record['type'],
+    'value': external_ip
+  })
+
+  # ensure that we successfully set the new record
+  if (len(updated_record) <= 0 or
+      'value' not in updated_record[0] or
+      updated_record[0]['value'] != external_ip):
+    print 'failed to successfully update dynamic record'
+    sys.exit(4)
+
+  # set the new zone version as the active version
+  print 'setting updated zone version as the active version'
+  gandi.domain.zone.version.set(zone_id, new_version_id)
+
+  print 'set zone %d as active zone version' % new_version_id
 
 if __name__ == '__main__':
   main()
