@@ -208,7 +208,7 @@ def main():
 
   # update the new version's dynamic record value (i.e. its IP address)
   print 'updating dynamic record with new external IP %s' % external_ip
-  updated_record = gandi.domain.zone.record.update(zone_id, new_version_id, {
+  updated_records = gandi.domain.zone.record.update(zone_id, new_version_id, {
     'id': new_dynamic_record['id']
   }, {
     'name': new_dynamic_record['name'],
@@ -216,10 +216,10 @@ def main():
     'value': external_ip
   })
 
-  # ensure that we successfully set the new record
-  if (len(updated_record) <= 0 or
-      'value' not in updated_record[0] or
-      updated_record[0]['value'] != external_ip):
+  # ensure that we successfully set the new dynamic record
+  if (len(updated_records) <= 0 or
+      'value' not in updated_records[0] or
+      updated_records[0]['value'] != external_ip):
     print 'failed to successfully update dynamic record'
     sys.exit(4)
 
