@@ -110,7 +110,7 @@ def get_external_ip(attempts=100, threshold=3):
         return ip
 
     except Exception, e:
-      print 'error getting external IP address from %s:' % provider, e
+      print >> 'Error getting external IP address from %s:' % provider, e
 
       # sleep a bit after errors, in case it's a general network error. if it
       # is, hopefully this will give some time for the network to come back up.
@@ -135,30 +135,28 @@ def main():
   '''
 
   import sys
-  from pprint import pprint as pp
-
-  # TODO: get the external IP address, since everything hinges on it
-  # external_ip = get_external_ip()
-  # print 'external IP address:', external_ip
 
   # load the config file so we can get our variables
-  print 'loading config file'
+  print 'Loading config file...'
   config = load_config()
+  print 'Config file loaded.'
 
   # create a connection to the Gandi production API
   gandi = GandiServerProxy(config['api_key'])
 
   # get the current zone id for the configured domain
-  print "getting domain info for domain '%s'" % config['domain']
+  print "Getting domain info for domain '%s'..." % config['domain']
   domain_info = gandi.domain.info(config['domain'])
   zone_id = domain_info['zone_id']
+  print 'Got domain info.'
 
   # get the list of records for the domain's current zone
-  print 'getting zone records for live zone version'
+  print 'Getting zone records for live zone version...'
   zone_records = gandi.domain.zone.record.list(zone_id, 0)
+  print 'Got zone records.'
 
   # find the configured record, or None if there's not a valid one
-  print "searching for dynamic record '%s'" % config['name']
+  print "Searching for dynamic record '%s'..." % config['name']
   dynamic_record = None
   for record in zone_records:
     if is_valid_dynamic_record(config['name'], record):
@@ -167,34 +165,44 @@ def main():
 
   # fail if we found no valid record to update
   if dynamic_record is None:
-    print 'no matching record found - must be an A record with a matching name'
+    print >> 'No record found - there must be an A record with a matching name.'
     sys.exit(1)
 
-  print 'dynamic record found'
+  print 'Dynamic record found.'
 
   # see if the record's IP differs from ours
-  print 'getting external IP'
+  print 'Getting external IP...'
   external_ip = get_external_ip()
 
   # make sure we actually got the external IP
   if external_ip is None:
-    print 'could not get external IP'
+    print >> 'Could not get external IP.'
     sys.exit(2)
 
-  print 'external IP is %s' % external_ip
+  print 'External IP is:', external_ip
+
+  # extract the current live IP
+  record_ip = dynamic_record['value'].strip()
+  print 'Current dynamic record IP is:', record_ip
 
   # compare the IPs, and exit if they match
-  if external_ip == dynamic_record['value'].strip():
-    print 'external IP %s matches current IP, no update necessary' % external_ip
+  if external_ip == record_ip:
+    print 'External IP matches current dynamic record IP, no update necessary.'
     sys.exit(0)
 
+  print 'External IP differs from current dynamic record IP!'
+
   # clone the active zone version so we can modify it
-  print 'cloning current zone version'
+  print 'Cloning current zone version...'
   new_version_id = gandi.domain.zone.version.new(zone_id)
+  print 'Current zone version cloned.'
+
+  print 'Getting cloned zone records...'
   new_zone_records = gandi.domain.zone.record.list(zone_id, new_version_id)
+  print 'Cloned zone records retrieved.'
 
   # find the configured record, or None if there's not a valid one
-  print 'locating dynamic record in new version'
+  print 'Locating dynamic record in cloned zone version...'
   new_dynamic_record = None
   for record in new_zone_records:
     if is_valid_dynamic_record(config['name'], record):
@@ -203,11 +211,13 @@ def main():
 
   # fail if we couldn't find the dynamic record again (this shouldn't happen...)
   if new_dynamic_record is None:
-    print 'could not find dynamic record in new zone version!'
+    print >> 'Could not find dynamic record in cloned zone version!'
     sys.exit(3)
 
+  print 'Cloned dynamic record found.'
+
   # update the new version's dynamic record value (i.e. its IP address)
-  print 'updating dynamic record with new external IP %s' % external_ip
+  print 'Updating dynamic record with current external IP...' % external_ip
   updated_records = gandi.domain.zone.record.update(zone_id, new_version_id, {
     'id': new_dynamic_record['id']
   }, {
@@ -220,14 +230,17 @@ def main():
   if (len(updated_records) <= 0 or
       'value' not in updated_records[0] or
       updated_records[0]['value'] != external_ip):
-    print 'failed to successfully update dynamic record'
+    print >> 'Failed to successfully update dynamic record!'
     sys.exit(4)
 
+  print 'Dynamic record updated.'
+
   # set the new zone version as the active version
-  print 'setting updated zone version as the active version'
+  print 'Updating active zone version...'
   gandi.domain.zone.version.set(zone_id, new_version_id)
 
-  print 'set zone %d as active zone version' % new_version_id
+  print 'Set zone %d as the active zone version.' % new_version_id
+  print 'Dynamic record successfully updated to %s!' % external_ip
 
 if __name__ == '__main__':
   main()
