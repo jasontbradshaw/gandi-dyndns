@@ -12,3 +12,7 @@ http://my-ip.asia
 http://www.givememyip.com
 https://www.name.com/whats-my-ip-address
 http://www.showmyip.gr
+https://freegeoip.net/csv/
+http://ipinfo.io/ip
+http://ip-api.com/csv
+http://www.moanmyip.com/
