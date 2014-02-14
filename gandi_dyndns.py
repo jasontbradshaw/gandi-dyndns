@@ -19,6 +19,7 @@ class GandiServerProxy(object):
   calling the API using Python attribute accessors instead of strings, and
   allows for the API key to be pre-loaded into all method calls.
   '''
+
   def __init__(self, api_key, proxy=None, chain=[], test=False):
     self.api_key = api_key
     self.chain = chain
@@ -58,11 +59,8 @@ class GandiServerProxy(object):
 def get_external_ip(attempts=100, threshold=3):
   '''Return our current external IP address, or None if there was an error.'''
 
-  # read the list of IP address providers, de-duping and normalizing them
-  providers = []
-  with open('ip-providers.txt') as f:
-    providers = set(line.strip() for line in f)
-    providers = filter(lambda x: not not x, providers)
+  # load the tuple of IP address providers
+  providers = load_providers()
 
   # we want several different providers to agree on the address, otherwise we
   # need to keep trying to get agreement. this prevents picking up 'addresses'
@@ -119,8 +117,14 @@ def get_external_ip(attempts=100, threshold=3):
   # return None if no agreement could be reached
   return None
 
+def load_providers():
+  '''Load the providers file as a de-duplicated and normalized tuple of URLs.'''
+  with open('providers.json') as f:
+    providers = json.load(f)['providers']
+  return tuple(set([p.strip() for p in providers]))
+
 def load_config():
-  '''Load the config file from disk'''
+  '''Load the config file from disk.'''
   with open('config.json') as f:
     return json.load(f)
 
