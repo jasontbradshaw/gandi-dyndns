@@ -1,14 +1,11 @@
 {
   "providers": [
     "http://checkip.dyndns.org",
-    "http://cmyip.com",
     "http://fmbip.com",
     "http://ip-api.com/csv",
     "http://ipchicken.com",
     "http://ipinfo.io/ip",
-    "http://my-ip.asia",
     "http://ventrilo.com/myip.php",
-    "http://whatismyipaddress.com",
     "http://whatsmyip.net",
     "http://www.givememyip.com",
     "http://www.moanmyip.com/",
