@@ -59,6 +59,14 @@ class GandiServerProxy(object):
     # call the proxy's method with the modified arguments
     return getattr(self.proxy, method)(*key_args)
 
+def get_external_ip_from_url(url):
+  '''Get all the IP addresses found at a given URL.'''
+
+  # open the website, download its data, and return all IP strings found
+  data = urllib2.urlopen(url, timeout=10).read()
+  addys = IP_ADDRESS_REGEX.findall(data)
+  return addys
+
 def get_external_ip(attempts=100, threshold=3):
   '''Return our current external IP address, or None if there was an error.'''
 
@@ -89,9 +97,7 @@ def get_external_ip(attempts=100, threshold=3):
     provider = current_providers.pop()
 
     try:
-      # open the website, download its data, and search for IP strings
-      data = urllib2.urlopen(provider, timeout=10).read()
-      addys = IP_ADDRESS_REGEX.findall(data)
+      addys = get_external_ip_from_url(provider)
 
       # add a single address to the counter randomly to help prevent false
       # positives. we don't add all the found addresses to guard against adding
@@ -100,9 +106,9 @@ def get_external_ip(attempts=100, threshold=3):
       # the chances that several sites will return the same false-positive
       # number?
       if len(addys) > 0:
-        log.info('Got external address from provider: %s', provider)
         ip = random.choice(addys)
         ip_counts.update({ ip: 1 })
+        log.info('Got IP from provider %s: %s', provider, ip)
 
       # check for agreeing IP addresses, and return the first address that meets
       # or exceeds the count threshold.
@@ -138,13 +144,23 @@ def is_valid_dynamic_record(name, record):
   '''Return True if the record matched the given name and is an A record.'''
   return record['name'] == name and record['type'].lower() == 'a'
 
-def main():
+def test_providers():
+  '''Test all IP providers and log the IPs they return.'''
+
+  for provider in load_providers():
+    log.info('IPs found at %s:', provider)
+
+    try:
+      for ip in get_external_ip_from_url(provider):
+        log.info('  %s', ip)
+    except Exception, e:
+      log.warning('Error getting external IP address from %s: %s', provider, e)
+
+def update_ip():
   '''
   Check our external IP address and update Gandi's A-record to point to it if
   it has changed.
   '''
-
-  import sys
 
   # load the config file so we can get our variables
   log.info('Loading config file...')
@@ -252,5 +268,13 @@ def main():
   log.info('Set zone %d as the active zone version.', new_version_id)
   log.info('Dynamic record successfully updated to %s!', external_ip)
 
+def main(args):
+  # test all providers if specified, otherwise update the IP
+  if args[-1] == 'test':
+    test_providers()
+  else:
+    update_ip()
+
 if __name__ == '__main__':
-  main()
+  import sys
+  main(sys.argv)
