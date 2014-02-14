@@ -1,5 +1,5 @@
 {
-  "domain": "example.com",
   "api_key": "twentyfourcharacterslong",
+  "domain": "example.com",
   "name": "dynamic"
 }
