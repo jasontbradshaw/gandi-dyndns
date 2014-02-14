@@ -110,7 +110,7 @@ def get_external_ip(attempts=100, threshold=3):
         return ip
 
     except Exception, e:
-      print >> 'Error getting external IP address from %s:' % provider, e
+      print 'Error getting external IP address from %s:' % provider, e
 
       # sleep a bit after errors, in case it's a general network error. if it
       # is, hopefully this will give some time for the network to come back up.
@@ -165,7 +165,7 @@ def main():
 
   # fail if we found no valid record to update
   if dynamic_record is None:
-    print >> 'No record found - there must be an A record with a matching name.'
+    print 'No record found - there must be an A record with a matching name.'
     sys.exit(1)
 
   print 'Dynamic record found.'
@@ -176,7 +176,7 @@ def main():
 
   # make sure we actually got the external IP
   if external_ip is None:
-    print >> 'Could not get external IP.'
+    print 'Could not get external IP.'
     sys.exit(2)
 
   print 'External IP is:', external_ip
@@ -211,13 +211,13 @@ def main():
 
   # fail if we couldn't find the dynamic record again (this shouldn't happen...)
   if new_dynamic_record is None:
-    print >> 'Could not find dynamic record in cloned zone version!'
+    print 'Could not find dynamic record in cloned zone version!'
     sys.exit(3)
 
   print 'Cloned dynamic record found.'
 
   # update the new version's dynamic record value (i.e. its IP address)
-  print 'Updating dynamic record with current external IP...' % external_ip
+  print 'Updating dynamic record with current external IP...'
   updated_records = gandi.domain.zone.record.update(zone_id, new_version_id, {
     'id': new_dynamic_record['id']
   }, {
@@ -230,7 +230,7 @@ def main():
   if (len(updated_records) <= 0 or
       'value' not in updated_records[0] or
       updated_records[0]['value'] != external_ip):
-    print >> 'Failed to successfully update dynamic record!'
+    print 'Failed to successfully update dynamic record!'
     sys.exit(4)
 
   print 'Dynamic record updated.'
