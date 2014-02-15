@@ -79,9 +79,9 @@ for the changes to propogate through the DNS system!
 
 We set the A record's TTL to 5 minutes so that when the address is dynamically
 updated by the script, that's the (hopefully) longest amount of time that would
-pass before the DNS system caught up with the change made by the script.
-Setting this much lower wouldn't be of much use, and could even cause DNS errors
-(see http://www.zytrax.com/books/dns/info/minimum-ttl.html)!
+pass before the DNS system caught up with the change.  Setting this much lower
+wouldn't be of much use, and could even cause DNS errors (see
+http://www.zytrax.com/books/dns/info/minimum-ttl.html).
 
 ### Configuration
 
