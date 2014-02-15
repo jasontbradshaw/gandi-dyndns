@@ -10,7 +10,7 @@ It requires a server running a reasonably recent version of Python 2. It has
 been tested on Ubuntu Linux using Python 2.7.
 
 ### Walkthrough
-Last updated February 14th, 2014.
+###### Last updated February 14th, 2014.
 
 Say you'd like to be able to access your home server externally at
 `dynamic.example.com`.
@@ -18,9 +18,8 @@ Say you'd like to be able to access your home server externally at
 #### API Key
 First, you must apply for an API key with Gandi. Visit
 https://www.gandi.net/admin/api_key and apply for (at least) the production API
-key by following their directions. Once your request has been approves, you can
-return to this page to retrieve the production API key, which will be used in
-the configuration step later.
+key by following their directions. Once your request has been approved, you can
+return to this page to retrieve the production API key.
 
 #### A Record Setup
 Then, you'll need to create a [DNS A
@@ -34,12 +33,14 @@ Internet at large!
 1. Click "Create a new version".
 1. Click "Add".
 1. Change the values to:
+
   | Field | Value
   | ----: | :----
   | Type  | A
   | TTL   | 5 minutes
   | Name  | dynamic
   | Value | 127.0.0.1
+
 1. Click "Submit".
 1. Click "Use this version".
 1. Click "Submit".
@@ -49,7 +50,8 @@ Then you'd need to configure the script.
 
 1. Copy `config-example.json` to `config.json`, and put it in the same directory
    as the script.
-1. Open it with a text editor, and give it the following values:
+1. Open it with a text editor, and change it to look like the following:
+
   ```json
   {
     "api_key": "yourtwentyfourcharapikey",
@@ -58,11 +60,17 @@ Then you'd need to configure the script.
   }
   ```
 
+  You can apply for/retrieve your production API key at
+  https://www.gandi.net/admin/api_key.
+
+1. Save and close the file.
+
 #### Running the Script
 You can run the script from the command line of an OSX/Unix system as described
-in the `Use` section! It will be useful to run this on a `cron` system of some
+in the [Use](#Use) section. It will be useful to run this on a `cron` system of some
 kind so that as long as the server is running, it will update its own IP
-address.
+address. Running the script with the `test` parameter is also a good idea, so you
+can ensure that good results come back from most of the providers.
 
 #### Notes
 
