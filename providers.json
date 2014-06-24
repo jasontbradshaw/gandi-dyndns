@@ -1,7 +1,7 @@
 {
   "providers": [
     "http://checkip.dyndns.org",
-    "http://curlmyip.com/",
+    "http://curlmyip.com",
     "http://fmbip.com",
     "http://ifconfig.me",
     "http://ip-api.com/csv",
