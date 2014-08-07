@@ -67,10 +67,12 @@ Then you'd need to configure the script.
 
 #### Running the Script
 You can run the script from the command line of an OSX/Unix system as described
-in the [Use](#Use) section. It will be useful to run this on a `cron` system of some
+in the [Use](#use) section. It will be useful to run this on a `cron` system of some
 kind so that as long as the server is running, it will update its own IP
-address. Running the script with the `test` parameter is also a good idea, so you
-can ensure that good results come back from most of the providers.
+address (see:
+http://code.tutsplus.com/tutorials/scheduling-tasks-with-cron-jobs--net-8800).
+Running the script with the `test` parameter is also a good idea, so you can
+ensure that good results come back from most of the providers.
 
 #### Notes
 
