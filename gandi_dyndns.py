@@ -15,6 +15,8 @@ log.basicConfig(format='%(asctime)-15s [%(levelname)s] %(message)s', level=log.I
 # multiple-provider agreement before returning an IP.
 IP_ADDRESS_REGEX = re.compile('\d{1,3}(?:\.\d{1,3}){3}')
 
+USER_AGENT = 'Mozilla/5.0'
+
 class GandiServerProxy(object):
   '''
   Proxy calls to an internal xmlrpclib.ServerProxy instance, accounting for the
@@ -63,7 +65,9 @@ def get_external_ip_from_url(url):
   '''Get all the IP addresses found at a given URL.'''
 
   # open the website, download its data, and return all IP strings found
-  data = urllib2.urlopen(url, timeout=10).read()
+  opener = urllib2.build_opener()
+  opener.addheaders = [('User-agent', USER_AGENT)]
+  data = opener.open(url, timeout=10).read()
   addys = IP_ADDRESS_REGEX.findall(data)
   return addys
 
