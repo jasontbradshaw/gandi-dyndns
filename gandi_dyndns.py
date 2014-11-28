@@ -9,7 +9,7 @@ import urllib2
 import xmlrpclib
 
 import logging as log
-log.basicConfig(format='[%(levelname)s] %(message)s', level=log.DEBUG)
+log.basicConfig(format='%(asctime)-15s [%(levelname)s] %(message)s', level=log.DEBUG)
 
 # matches all IPv4 addresses, including invalid ones. we look for
 # multiple-provider agreement before returning an IP.
