@@ -17,6 +17,7 @@ IP_ADDRESS_REGEX = re.compile('\d{1,3}(?:\.\d{1,3}){3}')
 
 USER_AGENT = 'Mozilla/5.0'
 
+
 class GandiServerProxy(object):
   '''
   Proxy calls to an internal xmlrpclib.ServerProxy instance, accounting for the
@@ -92,7 +93,7 @@ def get_external_ip(attempts=100, threshold=3):
     # randomly shuffle the providers list when it's empty so we can round-robin
     # from all the providers. also reset the counts, since double-counting
     # results from the same providers might result in false-positives.
-    if len(current_providers) == 0:
+    if not current_providers:
       current_providers = providers[:]
       random.shuffle(current_providers)
       ip_counts = collections.Counter()
@@ -109,7 +110,7 @@ def get_external_ip(attempts=100, threshold=3):
       # address and then checking it against the other sites is safer. what are
       # the chances that several sites will return the same false-positive
       # number?
-      if len(addys) > 0:
+      if addys:
         ip = random.choice(addys)
         ip_counts.update({ ip: 1 })
         log.debug('Got IP from provider %s: %s', provider, ip)
@@ -267,7 +268,7 @@ def update_ip():
     })
 
     # ensure that we successfully set the new dynamic record
-    if (len(updated_records) == 0 or
+    if (not updated_records or
         'value' not in updated_records[0] or
         updated_records[0]['value'] != external_ip):
       log.fatal('Failed to successfully update dynamic record!')
