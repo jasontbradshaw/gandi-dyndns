@@ -145,6 +145,12 @@ def is_valid_dynamic_record(name, record):
   '''Return True if the record matched the given name and is an A record.'''
   return record['name'] == name and record['type'].lower() == 'a'
 
+def check_config(conf):
+  if 'name' in conf:
+    log.fatal("Parameter 'name' is now named 'names' and is an array.")
+    return False
+  return True
+
 def test_providers():
   '''Test all IP providers and log the IPs they return.'''
 
@@ -166,6 +172,8 @@ def update_ip():
   # load the config file so we can get our variables
   log.debug('Loading config file...')
   config = load_config()
+  if not check_config(config):
+    sys.exit(2)
   log.debug('Config file loaded.')
 
   # create a connection to the Gandi production API
