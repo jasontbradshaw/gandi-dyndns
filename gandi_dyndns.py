@@ -237,6 +237,7 @@ def update_ip():
   new_zone_records = gandi.domain.zone.record.list(zone_id, new_version_id)
   log.info('Cloned zone records retrieved.')
 
+  errors = 0
   for rec in updates:
     # find the configured record, or None if there's not a valid one
     log.debug('Locating dynamic record in cloned zone version...')
@@ -249,6 +250,7 @@ def update_ip():
     # fail if we couldn't find the dynamic record again (this shouldn't happen...)
     if new_dynamic_record is None:
       log.error('Could not find dynamic record in cloned zone version!')
+      errors += 1
       continue
 
     log.debug('Cloned dynamic record found.')
@@ -268,9 +270,14 @@ def update_ip():
         'value' not in updated_records[0] or
         updated_records[0]['value'] != external_ip):
       log.fatal('Failed to successfully update dynamic record!')
+      errors += 1
       continue
 
     log.info('Dynamic record updated.')
+
+  if errors:
+    log.info('Errors during processing, zone NOT UPDATED.')
+    sys.exit(1)
 
   # set the new zone version as the active version
   log.info('Updating active zone version...')
