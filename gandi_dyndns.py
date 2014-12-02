@@ -9,7 +9,7 @@ import urllib2
 import xmlrpclib
 
 import logging as log
-log.basicConfig(format='%(asctime)-15s [%(levelname)s] %(message)s', level=log.INFO)
+log.basicConfig(format='%(asctime)-15s [%(levelname)s] %(message)s', level=log.DEBUG)
 
 # matches all IPv4 addresses, including invalid ones. we look for
 # multiple-provider agreement before returning an IP.
@@ -198,7 +198,7 @@ def update_ip():
     sys.exit(2)
 
   updates = []
-  for rec in config['names'].split(','):
+  for rec in config['names']:
     rec = rec.strip()
 
     # find the configured record, or None if there's not a valid one

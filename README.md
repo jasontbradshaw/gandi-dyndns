@@ -56,7 +56,7 @@ Then you'd need to configure the script.
   {
     "api_key": "yourtwentyfourcharapikey",
     "domain": "example.com",
-    "names": "dynamic"
+    "names": [ "@", "mail", "xmpp" ]
   }
   ```
 
