@@ -9,7 +9,7 @@ import urllib2
 import xmlrpclib
 
 import logging as log
-log.basicConfig(format='[%(levelname)s] %(message)s', level=log.DEBUG)
+log.basicConfig(format='%(asctime)-15s [%(levelname)s] %(message)s', level=log.DEBUG)
 
 # matches all IPv4 addresses, including invalid ones. we look for
 # multiple-provider agreement before returning an IP.
@@ -63,6 +63,7 @@ def get_external_ip_from_url(url):
   '''Get all the IP addresses found at a given URL.'''
 
   # open the website, download its data, and return all IP strings found
+  # we want to respect some site's filtering on User-Agent.
   data = urllib2.urlopen(url, timeout=10).read()
   addys = IP_ADDRESS_REGEX.findall(data)
   return addys
@@ -88,7 +89,7 @@ def get_external_ip(attempts=100, threshold=3):
     # randomly shuffle the providers list when it's empty so we can round-robin
     # from all the providers. also reset the counts, since double-counting
     # results from the same providers might result in false-positives.
-    if len(current_providers) == 0:
+    if not current_providers:
       current_providers = providers[:]
       random.shuffle(current_providers)
       ip_counts = collections.Counter()
@@ -105,10 +106,10 @@ def get_external_ip(attempts=100, threshold=3):
       # address and then checking it against the other sites is safer. what are
       # the chances that several sites will return the same false-positive
       # number?
-      if len(addys) > 0:
+      if addys:
         ip = random.choice(addys)
         ip_counts.update({ ip: 1 })
-        log.info('Got IP from provider %s: %s', provider, ip)
+        log.debug('Got IP from provider %s: %s', provider, ip)
 
       # check for agreeing IP addresses, and return the first address that meets
       # or exceeds the count threshold.
@@ -144,15 +145,21 @@ def is_valid_dynamic_record(name, record):
   '''Return True if the record matched the given name and is an A record.'''
   return record['name'] == name and record['type'].lower() == 'a'
 
+def check_config(conf):
+  if 'name' in conf:
+    log.fatal("Parameter 'name' is now named 'names' and is an array.")
+    return False
+  return True
+
 def test_providers():
   '''Test all IP providers and log the IPs they return.'''
 
   for provider in load_providers():
-    log.info('IPs found at %s:', provider)
+    log.debug('IPs found at %s:', provider)
 
     try:
       for ip in get_external_ip_from_url(provider):
-        log.info('  %s', ip)
+        log.debug('  %s', ip)
     except Exception, e:
       log.warning('Error getting external IP address from %s: %s', provider, e)
 
@@ -163,60 +170,71 @@ def update_ip():
   '''
 
   # load the config file so we can get our variables
-  log.info('Loading config file...')
+  log.debug('Loading config file...')
   config = load_config()
-  log.info('Config file loaded.')
+  if not check_config(config):
+    sys.exit(2)
+  log.debug('Config file loaded.')
 
   # create a connection to the Gandi production API
   gandi = GandiServerProxy(config['api_key'])
 
   # get the current zone id for the configured domain
-  log.info("Getting domain info for domain '%s'...", config['domain'])
+  log.debug("Getting domain info for domain '%s'...", config['domain'])
   domain_info = gandi.domain.info(config['domain'])
   zone_id = domain_info['zone_id']
-  log.info('Got domain info.')
+  log.debug('Got domain info.')
 
   # get the list of records for the domain's current zone
-  log.info('Getting zone records for live zone version...')
+  log.debug('Getting zone records for live zone version...')
   zone_records = gandi.domain.zone.record.list(zone_id, 0)
-  log.info('Got zone records.')
-
-  # find the configured record, or None if there's not a valid one
-  log.info("Searching for dynamic record '%s'...", config['name'])
-  dynamic_record = None
-  for record in zone_records:
-    if is_valid_dynamic_record(config['name'], record):
-      dynamic_record = record
-      break
-
-  # fail if we found no valid record to update
-  if dynamic_record is None:
-    log.fatal('No record found - there must be an A record with a matching name.')
-    sys.exit(1)
-
-  log.info('Dynamic record found.')
+  log.debug('Got zone records.')
 
   # see if the record's IP differs from ours
-  log.info('Getting external IP...')
+  log.debug('Getting external IP...')
   external_ip = get_external_ip()
+
+  log.debug('External IP is: %s', external_ip)
 
   # make sure we actually got the external IP
   if external_ip is None:
     log.fatal('Could not get external IP.')
     sys.exit(2)
 
-  log.info('External IP is: %s', external_ip)
+  updates = []
+  for rec in config['names']:
+    rec = rec.strip()
 
-  # extract the current live IP
-  record_ip = dynamic_record['value'].strip()
-  log.info('Current dynamic record IP is: %s', record_ip)
+    # find the configured record, or None if there's not a valid one
+    log.debug("Searching for dynamic record '%s'...", rec)
+    dynamic_record = None
+    for record in zone_records:
+      if is_valid_dynamic_record(rec, record):
+        dynamic_record = record
+        break
 
-  # compare the IPs, and exit if they match
-  if external_ip == record_ip:
-    log.info('External IP matches current dynamic record IP, no update necessary.')
+    # fail if we found no valid record to update
+    if dynamic_record is None:
+      log.error('No record found - there must be an A record with a matching name.')
+      continue
+
+    log.debug('  Dynamic record found.')
+
+    # extract the current live IP
+    record_ip = dynamic_record['value'].strip()
+    log.debug('  Current dynamic record IP is: %s', record_ip)
+
+    # compare the IPs, and exit if they match
+    if external_ip == record_ip:
+      log.debug('  External IP matches current dynamic record IP, no update necessary.')
+      continue
+
+    log.debug('  External IP differs from current dynamic record IP!')
+    updates.append(rec)
+
+  if not updates:
+    log.info('External IP matches current dynamic records IPs, no update necessary.')
     sys.exit(0)
-
-  log.info('External IP differs from current dynamic record IP!')
 
   # clone the active zone version so we can modify it
   log.info('Cloning current zone version...')
@@ -227,39 +245,47 @@ def update_ip():
   new_zone_records = gandi.domain.zone.record.list(zone_id, new_version_id)
   log.info('Cloned zone records retrieved.')
 
-  # find the configured record, or None if there's not a valid one
-  log.info('Locating dynamic record in cloned zone version...')
-  new_dynamic_record = None
-  for record in new_zone_records:
-    if is_valid_dynamic_record(config['name'], record):
-      new_dynamic_record = record
-      break
+  errors = 0
+  for rec in updates:
+    # find the configured record, or None if there's not a valid one
+    log.debug('Locating dynamic record in cloned zone version...')
+    new_dynamic_record = None
+    for record in new_zone_records:
+      if is_valid_dynamic_record(rec, record):
+        new_dynamic_record = record
+        break
 
-  # fail if we couldn't find the dynamic record again (this shouldn't happen...)
-  if new_dynamic_record is None:
-    log.fatal('Could not find dynamic record in cloned zone version!')
-    sys.exit(3)
+    # fail if we couldn't find the dynamic record again (this shouldn't happen...)
+    if new_dynamic_record is None:
+      log.error('Could not find dynamic record in cloned zone version!')
+      errors += 1
+      continue
 
-  log.info('Cloned dynamic record found.')
+    log.debug('Cloned dynamic record found.')
 
-  # update the new version's dynamic record value (i.e. its IP address)
-  log.info('Updating dynamic record with current external IP...')
-  updated_records = gandi.domain.zone.record.update(zone_id, new_version_id, {
-    'id': new_dynamic_record['id']
-  }, {
-    'name': new_dynamic_record['name'],
-    'type': new_dynamic_record['type'],
-    'value': external_ip
-  })
+    # update the new version's dynamic record value (i.e. its IP address)
+    log.debug('Updating dynamic record with current external IP...')
+    updated_records = gandi.domain.zone.record.update(zone_id, new_version_id, {
+      'id': new_dynamic_record['id']
+    }, {
+      'name': new_dynamic_record['name'],
+      'type': new_dynamic_record['type'],
+      'value': external_ip
+    })
 
-  # ensure that we successfully set the new dynamic record
-  if (len(updated_records) == 0 or
-      'value' not in updated_records[0] or
-      updated_records[0]['value'] != external_ip):
-    log.fatal('Failed to successfully update dynamic record!')
-    sys.exit(4)
+    # ensure that we successfully set the new dynamic record
+    if (not updated_records or
+        'value' not in updated_records[0] or
+        updated_records[0]['value'] != external_ip):
+      log.fatal('Failed to successfully update dynamic record!')
+      errors += 1
+      continue
 
-  log.info('Dynamic record updated.')
+    log.info('Dynamic record updated.')
+
+  if errors:
+    log.info('Errors during processing, zone NOT UPDATED.')
+    sys.exit(1)
 
   # set the new zone version as the active version
   log.info('Updating active zone version...')

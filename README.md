@@ -56,12 +56,18 @@ Then you'd need to configure the script.
   {
     "api_key": "yourtwentyfourcharapikey",
     "domain": "example.com",
-    "name": "dynamic"
+    "names": [ "@", "mail", "xmpp" ]
   }
   ```
 
   You can apply for/retrieve your production API key at
   https://www.gandi.net/admin/api_key.
+
+  You can also specify multiple A records to be updated:
+
+  ```json
+    "names": "@,mail,xmpp"
+  ```
 
 1. Save and close the file.
 
