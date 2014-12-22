@@ -118,7 +118,7 @@ def get_external_ip(attempts=100, threshold=3):
           break
         return ip
 
-    except Exception, e:
+    except Exception as e:
       log.warning('Error getting external IP address from %s: %s', provider, e)
 
       # sleep a bit after errors, in case it's a general network error. if it
@@ -146,9 +146,15 @@ def is_valid_dynamic_record(name, record):
   return record['name'] == name and record['type'].lower() == 'a'
 
 def check_config(conf):
+  '''
+  Alert the user that they're using invalid config options, such as when
+  breaking changes to the config are made.
+  '''
+
   if 'name' in conf:
     log.fatal("Parameter 'name' is now named 'names' and is an array.")
     return False
+
   return True
 
 def test_providers():
@@ -160,7 +166,7 @@ def test_providers():
     try:
       for ip in get_external_ip_from_url(provider):
         log.debug('  %s', ip)
-    except Exception, e:
+    except Exception as e:
       log.warning('Error getting external IP address from %s: %s', provider, e)
 
 def update_ip():
