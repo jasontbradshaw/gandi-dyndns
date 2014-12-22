@@ -2,9 +2,9 @@ gandi_dyndns
 ----
 
 This implements a simple dynamic DNS updater for the
-[Gandi](https://www.gandi.net) registrar. It uses their XMLRPC API to update the
-zone file for a subdomain of a domain name to point at the external IPv4 address
-of the computer it has been run from.
+[Gandi](https://www.gandi.net) registrar. It uses their XML-RPC API to update
+the zone file for a subdomain of a domain name to point at the external IPv4
+address of the computer it has been run from.
 
 It requires a server running a reasonably recent version of Python 2. It has
 been tested on Ubuntu Linux using Python 2.7.
