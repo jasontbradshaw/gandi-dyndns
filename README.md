@@ -10,7 +10,7 @@ It requires a server running a reasonably recent version of Python 2. It has
 been tested on Ubuntu Linux using Python 2.7.
 
 ### Walkthrough
-###### Last updated February 14th, 2014.
+###### Last updated December 22nd, 2014.
 
 Say you'd like to be able to access your home server externally at
 `dynamic.example.com`.
@@ -56,25 +56,26 @@ Then you'd need to configure the script.
   {
     "api_key": "yourtwentyfourcharapikey",
     "domain": "example.com",
-    "names": [ "@", "mail", "xmpp" ]
+    "names": ["dynamic"]
   }
   ```
 
   You can apply for/retrieve your production API key at
   https://www.gandi.net/admin/api_key.
 
-  You can also specify multiple A records to be updated:
+  If you'd like to update more than one record with the external IP, simply add
+  more values to the `names` list:
 
   ```json
-    "names": "@,mail,xmpp"
+    "names": ["dynamic", "@", "mail", "xmpp"]
   ```
 
 1. Save and close the file.
 
 #### Running the Script
 You can run the script from the command line of an OSX/Unix system as described
-in the [Use](#use) section. It will be useful to run this on a `cron` system of some
-kind so that as long as the server is running, it will update its own IP
+in the [Use](#use) section. It will be useful to run this on a `cron` system of
+some kind so that as long as the server is running, it will update its own IP
 address (see:
 http://code.tutsplus.com/tutorials/scheduling-tasks-with-cron-jobs--net-8800).
 Running the script with the `test` parameter is also a good idea, so you can
@@ -87,7 +88,7 @@ for the changes to propogate through the DNS system!
 
 We set the A record's TTL to 5 minutes so that when the address is dynamically
 updated by the script, that's the (hopefully) longest amount of time that would
-pass before the DNS system caught up with the change.  Setting this much lower
+pass before the DNS system caught up with the change. Setting this much lower
 wouldn't be of much use, and could even cause DNS errors (see
 http://www.zytrax.com/books/dns/info/minimum-ttl.html).
 
