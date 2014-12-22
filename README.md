@@ -7,7 +7,7 @@ the zone file for a subdomain of a domain name to point at the external IPv4
 address of the computer it has been run from.
 
 It requires a server running a reasonably recent version of Python 2. It has
-been tested on Ubuntu Linux using Python 2.7.
+been tested on Ubuntu/Arch Linux using Python 2.7.
 
 ### Walkthrough
 ###### Last updated December 22nd, 2014.
