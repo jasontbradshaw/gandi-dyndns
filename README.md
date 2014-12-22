@@ -121,7 +121,7 @@ the script with the `test` parameter:
 ./gandi_dyndns.py test
 ```
 
-This will log out all the addressed received from each provider. Not every
+This will print out all the addressed received from each provider. Not every
 provider may return a single, or even uniform/correct, IP address! This is
 expected behavior, and the script waits for consensus around a given IP amongst
-several providers before using it.
+several providers before selecting it to be used.
