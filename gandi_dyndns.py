@@ -185,17 +185,6 @@ def update_ip():
   # create a connection to the Gandi production API
   gandi = GandiServerProxy(config['api_key'])
 
-  # get the current zone id for the configured domain
-  log.debug("Getting domain info for domain '%s'...", config['domain'])
-  domain_info = gandi.domain.info(config['domain'])
-  zone_id = domain_info['zone_id']
-  log.debug('Got domain info.')
-
-  # get the list of records for the domain's current zone
-  log.debug('Getting zone records for live zone version...')
-  zone_records = gandi.domain.zone.record.list(zone_id, 0)
-  log.debug('Got zone records.')
-
   # see if the record's IP differs from ours
   log.debug('Getting external IP...')
   external_ip = get_external_ip()
@@ -206,6 +195,17 @@ def update_ip():
   if external_ip is None:
     log.fatal('Could not get external IP.')
     sys.exit(2)
+
+  # get the current zone id for the configured domain
+  log.debug("Getting domain info for domain '%s'...", config['domain'])
+  domain_info = gandi.domain.info(config['domain'])
+  zone_id = domain_info['zone_id']
+  log.debug('Got domain info.')
+
+  # get the list of records for the domain's current zone
+  log.debug('Getting zone records for live zone version...')
+  zone_records = gandi.domain.zone.record.list(zone_id, 0)
+  log.debug('Got zone records.')
 
   updates = []
   for rec in config['names']:
