@@ -55,8 +55,7 @@ Then you'd need to configure the script.
   ```json
   {
     "api_key": "yourtwentyfourcharapikey",
-    "domain": "example.com",
-    "names": ["dynamic"]
+    "domains": { "example.com": ["dynamic"] }
   }
   ```
 
@@ -64,10 +63,19 @@ Then you'd need to configure the script.
   https://www.gandi.net/admin/api_key.
 
   If you'd like to update more than one record with the external IP, simply add
-  more values to the `names` list:
+  more values to the list in the `domains` dict:
 
   ```json
-    "names": ["dynamic", "@", "mail", "xmpp"]
+    "domains": { "example.com": ["dynamic", "@", "mail", "xmpp"] }
+  ```
+
+  If you'd like to update multiple domains, add more keys to the `domains` dict:
+
+  ```json
+    "domains": {
+      "example.com": ["dynamic"],
+      "example.org": ["www"]
+    }
   ```
 
 1. Save and close the file.
