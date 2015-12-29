@@ -10,7 +10,7 @@ It requires a server running a reasonably recent version of Python 2. It has
 been tested on Ubuntu/Arch Linux using Python 2.7.
 
 ### Walkthrough
-###### Last updated December 22nd, 2014.
+###### Last updated December 29th, 2015.
 
 Say you'd like to be able to access your home server externally at
 `dynamic.example.com`.
