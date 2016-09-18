@@ -2,6 +2,7 @@
 
 import collections
 import json
+import os
 import random
 import re
 import time
@@ -9,7 +10,7 @@ import urllib2
 import xmlrpclib
 
 import logging as log
-log.basicConfig(format='%(asctime)-15s [%(levelname)s] %(message)s', level=log.DEBUG)
+log.basicConfig(format='%(asctime)-15s [%(levelname)s] %(message)s', level=os.getenv('LOG_LEVEL', 'INFO'))
 
 # matches all IPv4 addresses, including invalid ones. we look for
 # multiple-provider agreement before returning an IP.
