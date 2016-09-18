@@ -78,6 +78,15 @@ Then you'd need to configure the script.
     }
   ```
 
+  If you would like to determine your external IP with a shell command instead
+  of using external services, specify the command to run in the 'command' key:
+
+  ```json
+    "command": "ipconfig getifaddr en0"
+  ```
+
+  The command should return the external IP address on stdout.
+
 1. Save and close the file.
 
 #### Running the Script

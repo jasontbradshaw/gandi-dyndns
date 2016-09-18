@@ -4,6 +4,7 @@ import collections
 import json
 import random
 import re
+import subprocess
 import time
 import urllib2
 import xmlrpclib
@@ -130,6 +131,9 @@ def get_external_ip(attempts=100, threshold=3):
   # return None if no agreement could be reached
   return None
 
+def get_local_ip(cmd):
+  return subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
+
 def load_providers():
   '''Load the providers file as a de-duplicated and normalized list of URLs.'''
   with open('providers.json') as f:
@@ -193,8 +197,12 @@ def update_ip():
   gandi = GandiServerProxy(config['api_key'])
 
   # see if the record's IP differs from ours
-  log.debug('Getting external IP...')
-  external_ip = get_external_ip()
+  if 'command' in config:
+    log.debug('Getting external IP using command: ' + config['command'])
+    external_ip = get_local_ip(config['command'])
+  else:
+    log.debug('Getting external IP...')
+    external_ip = get_external_ip()
 
   log.debug('External IP is: %s', external_ip)
 
