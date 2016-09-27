@@ -132,7 +132,22 @@ def get_external_ip(attempts=100, threshold=3):
   return None
 
 def get_local_ip(cmd):
-  return subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
+  log.debug('Running shell command: %s', cmd)
+  sp = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+  out, err = sp.communicate()
+
+  if out:
+    log.debug('Command output: %s', out.strip())
+  if err:
+    log.warning('Command error: %s', err.strip())
+
+  addys = IP_ADDRESS_REGEX.findall(out)
+
+  if addys:
+    return addys[0]
+  else:
+    log.warning('Failed to find a valid IP address in command output!')
+    return None
 
 def load_providers():
   '''Load the providers file as a de-duplicated and normalized list of URLs.'''
@@ -198,7 +213,7 @@ def update_ip():
 
   # see if the record's IP differs from ours
   if 'command' in config:
-    log.debug('Getting external IP using command: ' + config['command'])
+    log.debug('Getting external IP using local command...')
     external_ip = get_local_ip(config['command'])
   else:
     log.debug('Getting external IP...')
