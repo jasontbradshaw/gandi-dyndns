@@ -10,7 +10,11 @@ import urllib2
 import xmlrpclib
 
 import logging as log
-log.basicConfig(format='%(asctime)-15s [%(levelname)s] %(message)s', level=os.getenv('LOG_LEVEL', 'INFO'))
+LOG_LEVEL = log.getLevelName(os.getenv('LOG_LEVEL'))
+if not isinstance(LOG_LEVEL, int):
+  LOG_LEVEL = 20
+
+log.basicConfig(format='%(asctime)-15s [%(levelname)s] %(message)s', level=LOG_LEVEL)
 
 # matches all IPv4 addresses, including invalid ones. we look for
 # multiple-provider agreement before returning an IP.
