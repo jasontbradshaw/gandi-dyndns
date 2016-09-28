@@ -89,6 +89,13 @@ http://code.tutsplus.com/tutorials/scheduling-tasks-with-cron-jobs--net-8800).
 Running the script with the `test` parameter is also a good idea, so you can
 ensure that good results come back from most of the providers.
 
+Logs are written to stdout/stderr and the default log level is INFO. You can
+change the log level by setting the `LOG_LEVEL` environment variable. Ex:
+
+```bash
+LOG_LEVEL=DEBUG ./gandi_dyndns.py
+```
+
 #### Notes
 
 The first time your A record is configured, it may take several hours
