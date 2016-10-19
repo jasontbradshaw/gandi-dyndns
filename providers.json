@@ -1,12 +1,8 @@
 {
   "providers": [
     "http://checkip.dyndns.org",
-    "http://curlmyip.com",
     "http://fmbip.com",
-    "http://ifconfig.sh",
-    "http://ipconfig.io",
     "http://ip-api.com/csv",
-    "http://ipchicken.com",
     "http://ipinfo.io/ip",
     "http://ventrilo.com/myip.php",
     "http://whatsmyip.net",
@@ -14,7 +10,8 @@
     "http://www.moanmyip.com/",
     "http://www.myipnumber.com/my-ip-address.asp",
     "http://www.showmyip.gr",
-    "http://www.whatsmyip.us",
-    "https://www.name.com/whats-my-ip-address"
+    "https://www.name.com/whats-my-ip-address",
+    "http://whatismyip.akamai.com/",
+    "https://ifconfig.co/"
   ]
 }
