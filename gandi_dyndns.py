@@ -21,6 +21,9 @@ log.basicConfig(format='%(asctime)-15s [%(levelname)s] %(message)s', level=LOG_L
 # multiple-provider agreement before returning an IP.
 IP_ADDRESS_REGEX = re.compile('\d{1,3}(?:\.\d{1,3}){3}')
 
+# get the current basepath
+BASEPATH = os.path.dirname(os.path.realpath(__file__))
+
 class GandiServerProxy(object):
   '''
   Proxy calls to an internal xmlrpclib.ServerProxy instance, accounting for the
@@ -156,13 +159,13 @@ def get_local_ip(cmd):
 
 def load_providers():
   '''Load the providers file as a de-duplicated and normalized list of URLs.'''
-  with open('providers.json') as f:
+  with open(os.path.join(BASEPATH, 'providers.json')) as f:
     providers = json.load(f)['providers']
   return list(set([p.strip() for p in providers]))
 
 def load_config():
   '''Load the config file from disk.'''
-  with open('config.json') as f:
+  with open(os.path.join(BASEPATH, 'config.json')) as f:
     return json.load(f)
 
 def is_valid_dynamic_record(name, record):
