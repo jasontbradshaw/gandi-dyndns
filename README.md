@@ -8,6 +8,7 @@ more information about the API change and reasons for the deprecation.
 ## Alternative Projects
 Here are alternative projects that users have recommended:
 * https://github.com/cavebeat/gandi-live-dns
+* https://github.com/brianpcurran/gandi-automatic-dns
 
 If you have suggestions for other alternative projects, please open a new issue
 or pull request to discuss adding them.
